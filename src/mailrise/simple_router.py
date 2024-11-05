@@ -92,6 +92,7 @@ class _SimpleSender(typ.NamedTuple):
     title_template: Template
     body_template: Template
     body_format: typ.Optional[apprise.NotifyFormat]
+    allow_attachments: bool
 
 
 class SimpleRouter(Router):  # pylint: disable=too-few-public-methods
@@ -138,7 +139,7 @@ class SimpleRouter(Router):  # pylint: disable=too-few-public-methods
                 # Use the configuration body format if specified.
                 body_format=sender.body_format or email.body_format,
                 notify_type=rcpt.notify_type,
-                attachments=email.attachments
+                attachments=email.attachments if sender.allow_attachments else []
             )
 
     def get_sender(self, key: _Key) -> _SimpleSender | None:
@@ -193,6 +194,7 @@ def _load_simple_sender(logger: Logger, key: str, config: dict[str, typ.Any]) ->
     title_template = mr_config.get('title_template', '$subject ($from)')
     body_template = mr_config.get('body_template', '$body')
     body_format = mr_config.get('body_format', None)
+    allow_attachments = mr_config.get('allow_attachments', True)
     if not any(body_format == c for c in (None,
                                           apprise.NotifyFormat.TEXT,
                                           apprise.NotifyFormat.HTML,
@@ -204,5 +206,6 @@ def _load_simple_sender(logger: Logger, key: str, config: dict[str, typ.Any]) ->
         config_yaml=yaml.safe_dump(config),
         title_template=Template(title_template),
         body_template=Template(body_template),
-        body_format=body_format
+        body_format=body_format,
+        allow_attachments=allow_attachments
     )
